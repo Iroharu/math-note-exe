@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Logic Note</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+    <style>
+        :root {
+            --ink: #0f0e17;
+            --paper: #fffcf5;
+            --accent: #ff6b35;
+            --accent2: #2ec4b6;
+            --muted: #6b6b6b;
+            --border: #e8e0d0;
+            --card-bg: #ffffff;
+            --tag-math: #fff3ee;
+            --tag-math-text: #c94d1a;
+            --shadow: 0 2px 12px rgba(15,14,23,0.08);
+            --shadow-hover: 0 8px 30px rgba(15,14,23,0.14);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: var(--paper);
+            margin: 0;
+            min-height: 100vh;
+            color: var(--ink);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Grid bg */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,107,53,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,107,53,0.04) 1px, transparent 1px);
+            background-size: 28px 28px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px 16px 100px;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--ink);
+        }
+        .header-left {}
+        .header-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin: 0;
+            line-height: 1;
+        }
+        .header-title span { color: var(--accent); }
+        .header-sub {
+            font-size: 11px;
+            color: var(--muted);
+            margin: 4px 0 0;
+            letter-spacing: 0.5px;
+        }
+        .counter-badge {
+            font-family: 'Space Mono', monospace;
+            background: var(--ink);
+            color: var(--paper);
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* ===== EDITOR PANEL ===== */
+        .editor-panel {
+            background: #c8a882;
+            border: 2px solid var(--ink);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 5px 5px 0 var(--ink);
+            transition: box-shadow 0.15s ease;
+        }
+        .editor-panel:focus-within {
+            box-shadow: 7px 7px 0 var(--accent);
+        }
+
+        .panel-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .field-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .input-field {
+            width: 100%;
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 15px;
+            font-family: 'Noto Sans JP', sans-serif;
+            color: var(--ink);
+            background: var(--paper);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            appearance: none;
+        }
+        .input-field:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(255,107,53,0.15);
+        }
+        .input-field::placeholder { color: #bbb; }
+
+        select.input-field {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%230f0e17' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+            cursor: pointer;
+        }
+
+        textarea.input-field {
+            resize: none;
+            line-height: 1.6;
+            min-height: 80px;
+        }
+
+        /* Photo button */
+        .photo-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: var(--paper);
+            border: 1.5px dashed var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 14px;
+            color: var(--muted);
+            font-size: 14px;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        .photo-btn:active { background: #f0ede8; border-color: var(--accent); }
+        .photo-icon { font-size: 22px; }
+
+        #preview-area {
+            margin-bottom: 12px;
+            position: relative;
+        }
+        #img-preview {
+            width: 100%;
+            border-radius: 12px;
+            display: none;
+            border: 1.5px solid var(--border);
+        }
+        .remove-photo-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(15,14,23,0.75);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        /* Save button */
+        .save-btn {
+            background: var(--ink);
+            color: var(--paper);
+            border: 2px solid var(--ink);
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            font-family: 'Noto Sans JP', sans-serif;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+            overflow: hidden;
+        }
+        .save-btn:active {
+            background: var(--accent);
+            border-color: var(--accent);
+            transform: scale(0.98);
+        }
+        .save-btn.saving { opacity: 0.7; pointer-events: none; }
+
+        /* ===== FILTER BAR ===== */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            margin-bottom: 20px;
+            scrollbar-width: none;
+        }
+        .filter-bar::-webkit-scrollbar { display: none; }
+        .filter-chip {
+            white-space: nowrap;
+            border: 1.5px solid var(--border);
+            border-radius: 50px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-family: 'Noto Sans JP', sans-serif;
+            background: white;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .filter-chip.active {
+            background: var(--ink);
+            color: var(--paper);
+            border-color: var(--ink);
+        }
+
+        /* ===== CARDS ===== */
+        .tips-grid { display: flex; flex-direction: column; gap: 16px; }
+
+        .tip-card {
+            background: var(--card-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: box-shadow 0.2s, transform 0.2s;
+            animation: slideUp 0.35s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tip-card:active { box-shadow: var(--shadow-hover); }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 16px 16px 10px;
+            gap: 10px;
+        }
+        .card-meta { flex: 1; min-width: 0; }
+        .card-tag {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+            padding: 3px 8px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        .tag-数IA  { background: #fff0f0; color: #c0392b; }
+        .tag-数IIB { background: #f0f8ff; color: #1a56a8; }
+        .tag-数IIIC { background: #f0fff4; color: #1a7c3e; }
+        .tag-共通テスト { background: #fff8e1; color: #9a6b00; }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.4;
+            word-break: break-all;
+        }
+        .card-delete {
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            flex-shrink: 0;
+            transition: color 0.15s;
+        }
+        .card-delete:active { color: #e74c3c; }
+
+        .card-body {
+            padding: 0 16px 14px;
+            font-size: 13.5px;
+            line-height: 1.7;
+            color: #444;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .card-image-wrap {
+            border-top: 1.5px solid var(--border);
+        }
+        .card-image {
+            width: 100%;
+            display: block;
+            cursor: zoom-in;
+            transition: opacity 0.15s;
+        }
+        .card-image:active { opacity: 0.85; }
+
+        .card-footer {
+            padding: 8px 16px;
+            font-size: 11px;
+            color: #bbb;
+            font-family: 'Space Mono', monospace;
+            border-top: 1px solid #f5f5f5;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+        .empty-icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-text { font-size: 14px; line-height: 1.6; }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--ink);
+            color: var(--paper);
+            padding: 12px 22px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 100;
+            transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+            white-space: nowrap;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* ===== LIGHTBOX ===== */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+        }
+        .lightbox.open { opacity: 1; pointer-events: all; }
+        .lightbox img { max-width: 95vw; max-height: 90vh; border-radius: 8px; }
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        /* ===== STORAGE STATUS ===== */
+        .storage-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--muted);
+            font-family: 'Space Mono', monospace;
+            margin-bottom: 16px;
+            padding: 8px 12px;
+            background: rgba(255,107,53,0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255,107,53,0.1);
+        }
+        .storage-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--accent2);
+            flex-shrink: 0;
+        }
+        .storage-dot.warn { background: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-left">
+            <h1 class="header-title">Math<span>.</span>Note</h1>
+            <p class="header-sub">写真で残す自分だけの定石帳</p>
+        </div>
+        <div class="counter-badge" id="counterBadge">0 件</div>
+    </header>
+
+    <!-- STORAGE STATUS -->
+    <div class="storage-bar" id="storageBar">
+        <div class="storage-dot" id="storageDot"></div>
+        <span id="storageText">ストレージ読み込み中…</span>
+    </div>
+
+    <!-- EDITOR PANEL -->
+    <div class="editor-panel">
+        <div class="panel-label">＋ 新しい定石を追加</div>
+
+        <input type="text" id="titleInput" class="input-field" placeholder="定石のタイトル" maxlength="80">
+
+        <div class="field-row">
+            <select id="categoryInput" class="input-field">
+                <option value="数I・A">数I・A</option>
+                <option value="数II・B">数II・B</option>
+                <option value="数III・C">数III・C</option>
+                <option value="共通テスト">共通テスト</option>
+            </select>
+        </div>
+
+        <textarea id="contentInput" class="input-field" rows="3" placeholder="解法のポイント・メモ ($x^2$ など LaTeX 使用可)"></textarea>
+
+        <div id="previewArea">
+            <img id="imgPreview" src="" alt="preview">
+            <button class="remove-photo-btn" id="removePhotoBtn" onclick="removePhoto()">✕</button>
+        </div>
+
+        <label class="photo-btn">
+            <span class="photo-icon">📸</span>
+            <span>写真を撮る / アルバムから選ぶ</span>
+            <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleFile(this)">
+        </label>
+
+        <button class="save-btn" id="saveBtn" onclick="saveTip()">定石をライブラリに追加 →</button>
+    </div>
+
+    <!-- FILTER -->
+    <div class="filter-bar" id="filterBar">
+        <div class="filter-chip active" data-filter="ALL" onclick="setFilter(this)">すべて</div>
+        <div class="filter-chip" data-filter="数I・A" onclick="setFilter(this)">数I・A</div>
+        <div class="filter-chip" data-filter="数II・B" onclick="setFilter(this)">数II・B</div>
+        <div class="filter-chip" data-filter="数III・C" onclick="setFilter(this)">数III・C</div>
+        <div class="filter-chip" data-filter="共通テスト" onclick="setFilter(this)">共通テスト</div>
+    </div>
+
+    <!-- CARDS -->
+    <div class="tips-grid" id="tipsList"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">✕</span>
+    <img id="lightboxImg" src="" alt="full">
+</div>
+
+<script>
+// ===============================
+// STORAGE: IndexedDB + localStorage fallback
+// ===============================
+const DB_NAME = 'MathNoteDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'tips';
+
+let db = null;
+let tips = [];
+let currentFilter = 'ALL';
+let tempImageData = "";
+
+// Open IndexedDB
+function openDB() {
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) { resolve(null); return; }
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = e => {
+            const d = e.target.result;
+            if (!d.objectStoreNames.contains(STORE_NAME)) {
+                const store = d.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                store.createIndex('createdAt', 'createdAt');
+            }
+        };
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror = () => resolve(null); // fallback to localStorage
+    });
+}
+
+async function loadTips() {
+    if (db) {
+        return new Promise(resolve => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.getAll();
+            req.onsuccess = () => {
+                const items = req.result || [];
+                items.sort((a, b) => b.createdAt - a.createdAt);
+                resolve(items);
+            };
+            req.onerror = () => resolve(loadFromLocalStorage());
+        });
+    }
+    return loadFromLocalStorage();
+}
+
+function loadFromLocalStorage() {
+    try {
+        return JSON.parse(localStorage.getItem('math_photo_db')) || [];
+    } catch { return []; }
+}
+
+async function saveTipToDB(tip) {
+    if (db) {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).put(tip);
+            tx.oncomplete = resolve;
+            tx.onerror = () => {
+                // fallback
+                saveToLocalStorage();
+                resolve();
+            };
+        });
+    }
+    saveToLocalStorage();
+}
+
+async function deleteTipFromDB(id) {
+    if (db) {
+        return new Promise((resolve) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).delete(id);
+            tx.oncomplete = resolve;
+            tx.onerror = () => { saveToLocalStorage(); resolve(); };
+        });
+    }
+    saveToLocalStorage();
+}
+
+function saveToLocalStorage() {
+    try {
+        // Save without images to avoid quota issues
+        const slim = tips.map(t => ({ ...t, image: t.image ? '[img]' : '' }));
+        localStorage.setItem('math_photo_db', JSON.stringify(slim));
+    } catch(e) {
+        console.warn('localStorage save failed', e);
+    }
+}
+
+function updateStorageStatus() {
+    const dot = document.getElementById('storageDot');
+    const text = document.getElementById('storageText');
+    if (db) {
+        dot.className = 'storage-dot';
+        text.textContent = `IndexedDB オフライン保存済み（${tips.length}件）`;
+    } else {
+        dot.className = 'storage-dot warn';
+        text.textContent = `localStorage 保存中（画像は再起動後消える場合あり）`;
+    }
+}
+
+// ===============================
+// IMAGE HANDLING
+// ===============================
+function handleFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    // Resize to max 800px to save storage
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX = 800;
+            let w = img.width, h = img.height;
+            if (w > MAX || h > MAX) {
+                if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+                else { w = Math.round(w * MAX / h); h = MAX; }
+            }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            tempImageData = canvas.toDataURL('image/jpeg', 0.75);
+            const preview = document.getElementById('imgPreview');
+            preview.src = tempImageData;
+            preview.style.display = "block";
+            document.getElementById('removePhotoBtn').style.display = "flex";
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removePhoto() {
+    tempImageData = "";
+    const preview = document.getElementById('imgPreview');
+    preview.src = ""; preview.style.display = "none";
+    document.getElementById('removePhotoBtn').style.display = "none";
+    document.getElementById('imageInput').value = "";
+}
+
+// ===============================
+// SAVE
+// ===============================
+async function saveTip() {
+    const title = document.getElementById('titleInput').value.trim();
+    const content = document.getElementById('contentInput').value.trim();
+    const category = document.getElementById('categoryInput').value;
+
+    if (!title) { showToast('⚠️ タイトルを入力してください'); return; }
+
+    const btn = document.getElementById('saveBtn');
+    btn.classList.add('saving');
+    btn.textContent = '保存中…';
+
+    const tip = {
+        id: Date.now(),
+        title,
+        content,
+        category,
+        image: tempImageData,
+        createdAt: Date.now()
+    };
+
+    tips.unshift(tip);
+    await saveTipToDB(tip);
+
+    // Clear form
+    document.getElementById('titleInput').value = "";
+    document.getElementById('contentInput').value = "";
+    removePhoto();
+    btn.classList.remove('saving');
+    btn.textContent = '定石をライブラリに追加 →';
+
+    updateStorageStatus();
+    updateCounter();
+    render();
+    showToast('✅ 保存しました！');
+}
+
+// ===============================
+// DELETE
+// ===============================
+async function deleteTip(id) {
+    const card = document.getElementById('card-' + id);
+    if (card) { card.style.opacity = '0'; card.style.transform = 'scale(0.95)'; card.style.transition = '0.2s'; }
+    setTimeout(async () => {
+        tips = tips.filter(t => t.id !== id);
+        await deleteTipFromDB(id);
+        updateCounter();
+        updateStorageStatus();
+        render();
+    }, 200);
+}
+
+// ===============================
+// FILTER
+// ===============================
+function setFilter(el) {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    currentFilter = el.dataset.filter;
+    render();
+}
+
+// ===============================
+// RENDER
+// ===============================
+function render() {
+    const list = document.getElementById('tipsList');
+    const filtered = currentFilter === 'ALL' ? tips : tips.filter(t => t.category === currentFilter);
+
+    if (filtered.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📐</div>
+                <div class="empty-text">定石がまだありません<br>上のフォームから追加してみましょう！</div>
+            </div>`;
+        return;
+    }
+
+    list.innerHTML = "";
+    filtered.forEach(tip => {
+        const tagClass = 'tag-' + tip.category.replace(/[・]/g, '');
+        const date = new Date(tip.createdAt).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' });
+        const card = document.createElement('div');
+        card.className = 'tip-card';
+        card.id = 'card-' + tip.id;
+        card.innerHTML = `
+            <div class="card-header">
+                <div class="card-meta">
+                    <span class="card-tag ${tagClass}">${tip.category}</span>
+                    <h3 class="card-title">${escHtml(tip.title)}</h3>
+                </div>
+                <button class="card-delete" onclick="deleteTip(${tip.id})" aria-label="削除">×</button>
+            </div>
+            ${tip.content ? `<div class="card-body katex-content">${escHtml(tip.content)}</div>` : ''}
+            ${tip.image ? `<div class="card-image-wrap"><img src="${tip.image}" class="card-image" onclick="openLightbox(this.src)" loading="lazy"></div>` : ''}
+            <div class="card-footer">${date}</div>
+        `;
+        list.appendChild(card);
+    });
+
+    // Render KaTeX
+    if (window.renderMathInElement) {
+        renderMathInElement(list, {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false }
+            ],
+            throwOnError: false
+        });
+    }
+}
+
+function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function updateCounter() {
+    document.getElementById('counterBadge').textContent = tips.length + ' 件';
+}
+
+// ===============================
+// LIGHTBOX
+// ===============================
+function openLightbox(src) {
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+}
+
+// ===============================
+// TOAST
+// ===============================
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ===============================
+// INIT
+// ===============================
+window.addEventListener('DOMContentLoaded', async () => {
+    db = await openDB();
+    tips = await loadTips();
+    updateCounter();
+    updateStorageStatus();
+
+    // Load KaTeX auto-render
+    const s = document.createElement('script');
+    s.src = "https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js";
+    s.onload = render;
+    s.onerror = render;
+    document.head.appendChild(s);
+});
+</script>
+</body>
+</html>
